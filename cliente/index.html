@@ -2,10 +2,25 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notas Offline</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>📝 Notas Offline</h1>
+
+<div class="container">
+  <h1>📝 Notas Personales</h1>
   <p id="estado">🔄 Conectando...</p>
+  
+  <textarea id="contenido" placeholder="Escribe tu nota aquí..."></textarea>
+  <div class="botones">
+    <button onclick="guardarNota()">Guardar</button>
+    <button class="cancelar" onclick="cancelarEdicion()" id="btnCancelar" style="display: none;">Cancelar</button>
+  </div>
+  
+  <ul id="lista"></ul>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
