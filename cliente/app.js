@@ -1,6 +1,9 @@
 let notas = JSON.parse(localStorage.getItem("notas")) || [];
+let eliminadasOffline = JSON.parse(localStorage.getItem("eliminadasOffline")) || [];
 let online = false;
 let editandoId = null;
+let ultimaSincronizacion = 0;
+
 
 function guardarNota() {
   const contenido = document.getElementById("contenido").value.trim();
@@ -35,6 +38,7 @@ function guardarNota() {
   }
 }
 
+
 function editarNota(id) {
   const nota = notas.find(n => n.id === id);
   if (nota) {
@@ -45,19 +49,28 @@ function editarNota(id) {
   }
 }
 
+
 function eliminarNota(id) {
   if (confirm("¿Eliminar esta nota?")) {
+    // Registrar la nota como eliminada offline
+    eliminadasOffline.push(id);
+    localStorage.setItem("eliminadasOffline", JSON.stringify(eliminadasOffline));
+
     notas = notas.filter(n => n.id !== id);
     localStorage.setItem("notas", JSON.stringify(notas));
+
     if (editandoId === id) {
       editandoId = null;
       document.getElementById("contenido").value = "";
       document.querySelector("button").textContent = "Guardar";
     }
+
     render();
+
     if (online) sincronizar();
   }
 }
+
 
 function cancelarEdicion() {
   editandoId = null;
@@ -68,6 +81,7 @@ function cancelarEdicion() {
 function render() {
   const ul = document.getElementById("lista");
   ul.innerHTML = "";
+
   notas.forEach(n => {
     const li = document.createElement("li");
     li.className = "nota-item";
@@ -96,7 +110,6 @@ function render() {
   });
 }
 
-let ultimaSincronizacion = 0;
 
 async function verificarConexion() {
   try {
@@ -106,10 +119,8 @@ async function verificarConexion() {
       document.getElementById("estado").textContent = "🟢 Conectado";
       await sincronizar();
       ultimaSincronizacion = Date.now();
-    } else {
-      if (Date.now() - ultimaSincronizacion > 1000) {
-        await traerNotasDelServidor();
-      }
+    } else if (Date.now() - ultimaSincronizacion > 1000) {
+      await traerNotasDelServidor();
     }
   } catch {
     online = false;
@@ -120,65 +131,67 @@ async function verificarConexion() {
 async function traerNotasDelServidor() {
   try {
     const res = await fetch("http://localhost:5000/notas");
-    if (res.ok) {
-      const notasServidor = await res.json();
-      let cambios = false;
+    if (!res.ok) return;
 
-      for (let notaServidor of notasServidor) {
-        const notaLocal = notas.find(n => n.id === notaServidor.id);
-        if (!notaLocal) {
-          notas.push(notaServidor);
-          cambios = true;
-        } else if (notaLocal.updated_at < notaServidor.updated_at) {
-          notaLocal.contenido = notaServidor.contenido;
-          notaLocal.updated_at = notaServidor.updated_at;
-          cambios = true;
-        }
-      }
+    const notasServidor = await res.json();
+    let cambios = false;
 
-      if (cambios) {
-        localStorage.setItem("notas", JSON.stringify(notas));
-        render();
+    for (let notaServidor of notasServidor) {
+      const notaLocal = notas.find(n => n.id === notaServidor.id);
+      if (!notaLocal) {
+        notas.push(notaServidor);
+        cambios = true;
+      } else if (notaLocal.updated_at < notaServidor.updated_at) {
+        notaLocal.contenido = notaServidor.contenido;
+        notaLocal.updated_at = notaServidor.updated_at;
+        cambios = true;
       }
+    }
+
+    if (cambios) {
+      localStorage.setItem("notas", JSON.stringify(notas));
+      render();
     }
   } catch (error) {
     console.log("Error al traer notas:", error);
   }
 }
 
+
 async function sincronizar() {
   try {
     const res = await fetch("http://localhost:5000/sync", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(notas)
+      body: JSON.stringify({ notas, eliminadas: eliminadasOffline })
     });
 
-    if (res.ok) {
-      const notasDelServidor = await res.json();
+    if (!res.ok) return;
 
-     
-      notas = notas.filter(n => notasDelServidor.some(s => s.id === n.id));
+    const notasDelServidor = await res.json();
 
-     
-      for (let notaServidor of notasDelServidor) {
-        const indexLocal = notas.findIndex(n => n.id === notaServidor.id);
-        if (indexLocal !== -1) {
-          if (notas[indexLocal].updated_at < notaServidor.updated_at) {
-            notas[indexLocal] = notaServidor;
-          }
-        } else {
-          notas.push(notaServidor);
+   
+    eliminadasOffline = [];
+    localStorage.setItem("eliminadasOffline", JSON.stringify(eliminadasOffline));
+
+    for (let notaServidor of notasDelServidor) {
+      const indexLocal = notas.findIndex(n => n.id === notaServidor.id);
+      if (indexLocal !== -1) {
+        if (notas[indexLocal].updated_at < notaServidor.updated_at) {
+          notas[indexLocal] = notaServidor;
         }
+      } else {
+        notas.push(notaServidor);
       }
-
-      localStorage.setItem("notas", JSON.stringify(notas));
-      render();
     }
+
+    localStorage.setItem("notas", JSON.stringify(notas));
+    render();
   } catch (error) {
     console.log("Error al sincronizar:", error);
   }
 }
+
 
 setInterval(verificarConexion, 2000);
 verificarConexion();
