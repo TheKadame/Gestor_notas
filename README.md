@@ -212,3 +212,8 @@ BLOCK_NOTAS/
 --Backend: Python, Flask
 --Almacenamiento: localStorage + archivos JSON
 --Comunicación: HTTP/REST API
+
+**Autor:** Sebastian Ortega
+**Versión:** v1.0.0  
+**Fecha:** 16-01-2026  
+**Estado:** Estable
