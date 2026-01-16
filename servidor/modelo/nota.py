@@ -13,6 +13,7 @@ class Nota:
 
     @classmethod
     def _asegurar_cargado(cls):
+        """Carga las notas del archivo si no están cargadas"""
         if not cls._cargado:
             notas_data = cargar_notas()
             cls._notas = [
@@ -36,7 +37,7 @@ class Nota:
             if nota.id == nota_id:
                 return nota
         return None
-
+    """Asegura que las notas estén cargadas desde el archivo antes de cualquier operación."""
     @classmethod
     def guardar(cls, nueva_nota):
         cls._asegurar_cargado()
@@ -48,6 +49,7 @@ class Nota:
         else:
             cls._notas.append(nueva_nota)
         cls._guardar_en_disco()
+        """Guarda una nueva nota o actualiza una existente si la nueva es más reciente."""
 
     @classmethod
     def eliminar(cls, nota_id):
@@ -57,5 +59,6 @@ class Nota:
 
     @classmethod
     def _guardar_en_disco(cls):
+        """Guardar todas las notas en el archivo"""
         notas_data = [{"id": n.id, "contenido": n.contenido, "updated_at": n.updated_at} for n in cls._notas]
         guardar_notas(notas_data)

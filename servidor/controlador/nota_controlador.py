@@ -9,13 +9,13 @@ def sincronizar_notas():
     notas_cliente = request.json
     if not isinstance(notas_cliente, list):
         abort(400)
-
+# Obtener IDs del cliente
     ids_cliente = {n["id"] for n in notas_cliente}
-    
+    # Eliminar notas que el cliente eliminó
     notas_servidor = Nota.listar()
     for nota in notas_servidor[:]:  
             Nota.eliminar(nota.id)
-    
+    # Guardar/actualizar notas del cliente
     for n in notas_cliente:
         Nota.guardar(
             Nota(
