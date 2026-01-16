@@ -18,6 +18,7 @@ function guardarNota() {
     }
     editandoId = null;
     document.querySelector("button").textContent = "Guardar";
+    document.getElementById("btnCancelar").style.display = "none";
   } else {
     // Crear nueva nota
     const nota = {
@@ -43,7 +44,8 @@ function editarNota(id) {
   if (nota) {
     document.getElementById("contenido").value = nota.contenido;
     editandoId = id;
-    document.querySelector("button").textContent = "Actualizar";
+    document.querySelector("button").textContent = "Actualizar"
+    document.getElementById("btnCancelar").style.display = "inline-block";
     document.getElementById("contenido").focus();
   }
 }
@@ -68,6 +70,7 @@ function cancelarEdicion() {
   editandoId = null;
   document.getElementById("contenido").value = "";
   document.querySelector("button").textContent = "Guardar";
+  document.getElementById("btnCancelar").style.display = "none";
 }
 
 function render() {
@@ -86,11 +89,11 @@ function render() {
     acciones.className = "nota-acciones";
 
     const btnEditar = document.createElement("button");
-    btnEditar.textContent = "✏️ Editar";
+    btnEditar.textContent = "Editar";
     btnEditar.onclick = () => editarNota(n.id);
 
     const btnEliminar = document.createElement("button");
-    btnEliminar.textContent = "🗑️ Eliminar";
+    btnEliminar.textContent = "Eliminar";
     btnEliminar.onclick = () => eliminarNota(n.id);
 
     acciones.appendChild(btnEditar);
