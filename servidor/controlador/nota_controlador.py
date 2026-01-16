@@ -4,17 +4,18 @@ from modelo.nota import Nota
 def listar_notas():
     return jsonify([vars(n) for n in Nota.listar()]), 200
 
+
 def sincronizar_notas():
-    data = request.json
-    notas_cliente = data.get("notas", [])
-    eliminadas = data.get("eliminadas", [])
+    notas_cliente = request.json
+    if not isinstance(notas_cliente, list):
+        abort(400)
 
-    if not isinstance(notas_cliente, list) or not isinstance(eliminadas, list):
-        abort(400, description="Formato inválido: se espera 'notas' y 'eliminadas' como listas.")
-
-    for nota_id in eliminadas:
-        Nota.eliminar(nota_id)
-   
+    ids_cliente = {n["id"] for n in notas_cliente}
+    
+    notas_servidor = Nota.listar()
+    for nota in notas_servidor[:]:  
+            Nota.eliminar(nota.id)
+    
     for n in notas_cliente:
         Nota.guardar(
             Nota(
@@ -23,11 +24,12 @@ def sincronizar_notas():
                 _id=n["id"]
             )
         )
-
     return jsonify([vars(n) for n in Nota.listar()]), 200
+
 def eliminar_nota(nota_id):
     Nota.eliminar(nota_id)
     return "", 204
 
 def estado():
     return jsonify({"online": True}), 200
+ 
